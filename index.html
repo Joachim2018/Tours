@@ -20,6 +20,52 @@
     footer { background: #2c3e50; color: white; text-align: center; padding: 1em; }
     button { padding: 0.5em 1em; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; }
     #weather { padding: 2em; background: #f4f4f4; text-align: center; }
+    /* ...existing styles... */
+@media (max-width: 900px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1em;
+  }
+  nav ul {
+    flex-direction: column;
+    gap: 0.5em;
+    width: 100%;
+    margin-top: 1em;
+  }
+  header > div, header h1, header nav, header > div[style] {
+    width: 100%;
+    margin-bottom: 0.5em;
+    text-align: left;
+  }
+  #search {
+    width: 100%;
+    margin-top: 0.5em;
+  }
+}
+
+@media (max-width: 600px) {
+  #hero {
+    padding: 2em 1em;
+    font-size: 1em;
+  }
+  #mapid {
+    height: 300px;
+  }
+  #dest-list {
+    grid-template-columns: 1fr;
+  }
+  #destinations, #plan, #contact, #weather {
+    padding: 1em;
+  }
+  .dest-item {
+    padding: 0.5em;
+  }
+  footer {
+    font-size: 0.9em;
+    padding: 0.5em;
+  }
+}
   </style>
   <!-- Only include library scripts here, no inline JS code -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
