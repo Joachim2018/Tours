@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explore Uganda</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* ...existing styles... */
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header { background: #2c3e50; color: white; padding: 1em 2em; display: flex; justify-content: space-between; align-items: center; }
+    nav ul { list-style: none; display: flex; gap: 1em; margin: 0; padding: 0; }
+    nav ul li a { color: white; text-decoration: none; font-weight: bold; }
+    #hero { background: url('https://upload.wikimedia.org/wikipedia/commons/1/16/Uganda_landscape.jpg') no-repeat center center/cover; color: white; padding: 4em 2em; text-align: center; }
+    #mapid { height: 500px; width: 100%; margin: 1em 0; }
+    #destinations, #plan, #contact { padding: 2em; }
+    #dest-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1em; }
+    .dest-item { border: 1px solid #ccc; padding: 1em; border-radius: 8px; background: #f9f9f9; }
+    footer { background: #2c3e50; color: white; text-align: center; padding: 1em; }
+    button { padding: 0.5em 1em; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    #weather { padding: 2em; background: #f4f4f4; text-align: center; }
+  </style>
+  <!-- Only include library scripts here, no inline JS code -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.min.js"></script>
+</head>
+<body>
+  <!-- ...existing HTML content... -->
+   <header>
+    <div>
+      <label for="language-select" style="margin-right: 8px;">Language:</label>
+      <select id="language-select">
+        <option value="en">English</option>
+        <option value="lg">Luganda</option>
+        <option value="sw">Swahili</option>
+      </select>
+    </div>
+    <h1>Explore Uganda</h1>
+    <nav>
+      <ul>
+        <li><a href="#map">Map</a></li>
+        <li><a href="#destinations">Destinations</a></li>
+        <li><a href="#plan">Plan Your Visit</a></li>
+        <li><a href="#weather">Weather</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+      <div style="margin-left:auto;">
+        <input type="text" id="search" placeholder="Search destinations..." style="padding: 0.4em; border-radius: 4px; border: none;" />
+      </div>
+    </header>
+
+  <section id="hero">
+    <h2>Discover the Pearl of Africa</h2>
+    <p>Find beautiful landscapes, wildlife, culture, and more across Uganda.</p>
+  </section>
+
+  <section id="map">
+    <h2>Interactive Map of Uganda</h2>
+    <div id="mapid"></div>
+  </section>
+
+  <section id="destinations">
+    <label for="region-filter"><strong>Filter by Region:</strong></label>
+    <select id="region-filter">
+      <option value="all">All</option>
+      <option value="north">North</option>
+      <option value="west">West</option>
+      <option value="central">Central</option>
+      <option value="east">East</option>
+    </select>
+    <h2>Top Destinations</h2>
+    <div id="dest-list"></div>
+  </section>
+
+  <section id="plan">
+    <h2>Plan Your Visit</h2>
+    <button id="locate-btn">Use My Location</button>
+  </section>
+
+  <section id="weather">
+    <h2>Current Weather in Kampala</h2>
+    <div id="weather-info">Loading weather data...</div>
+  </section>
+
+  <section id="contact">
+    <h2>Feedback Form</h2>
+    <form id="feedback-form">
+      <input type="text" name="name" placeholder="Your Name" required /><br><br>
+      <input type="email" name="email" placeholder="Your Email" required /><br><br>
+      <textarea name="message" placeholder="Your Message" rows="4" required></textarea><br><br>
+      <button type="submit">Send Feedback</button>
+    </form>
+    <br>
+    <h2>Contact & Info</h2>
+    <p>Email: cythia652@gmail.com</p>
+    <p>Phone: +256 760846101</p>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 Explore Uganda. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // All your custom JavaScript goes here (only once!)
+    const destinations = [
+      { name: "Murchison Falls National Park", coords: [2.255, 31.806], description: "Uganda's most powerful waterfall and wildlife." },
+      { name: "Queen Elizabeth National Park", coords: [0.183, 30.042], description: "Home to tree-climbing lions and crater lakes." },
+      { name: "Bwindi Impenetrable Forest", coords: [-1.05, 29.716], description: "A UNESCO site with mountain gorillas." },
+      { name: "Kampala City", coords: [0.3476, 32.5825], description: "Capital city full of culture and nightlife." },
+      { name: "Jinja - Source of the Nile", coords: [0.44, 33.2], description: "Adventure capital of Uganda with the Nile's source." },
+      { name: "Lake Bunyonyi", coords: [-1.2833, 29.9208], description: "A scenic lake surrounded by terraced hills." },
+      { name: "Sipi Falls", coords: [1.275, 34.374], description: "A series of beautiful waterfalls in Eastern Uganda." },
+      { name: "Ziwa Rhino Sanctuary", coords: [1.485, 32.083], description: "Sanctuary for Uganda's only wild rhinos." }
+    ];
+
+    const map = L.map('mapid').setView([1.3733, 32.2903], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    destinations.forEach(dest => {
+      const marker = L.marker(dest.coords).addTo(map);
+      marker.bindPopup(`<strong>${dest.name}</strong><br>${dest.description}`);
+      const item = document.createElement('div');
+      item.className = 'dest-item';
+      item.innerHTML = `<h3>${dest.name}</h3><p>${dest.description}</p>`;
+      item.onclick = () => map.setView(dest.coords, 10);
+      document.getElementById('dest-list').appendChild(item);
+    });
+
+    document.getElementById('locate-btn').addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        const userCoords = [pos.coords.latitude, pos.coords.longitude];
+        L.marker(userCoords).addTo(map).bindPopup("You are here.").openPopup();
+        map.setView(userCoords, 10);
+        L.Routing.control({
+          waypoints: [
+            L.latLng(userCoords[0], userCoords[1]),
+            L.latLng(destinations[0].coords[0], destinations[0].coords[1])
+          ],
+          routeWhileDragging: true
+        }).addTo(map);
+      }, () => {
+        alert("Unable to retrieve your location.");
+      });
+    });
+
+    const apiKey = '6318a863537c48d84d6beb477b95adb5';
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=Kampala,UG&units=metric&appid=${apiKey}`)
+      .then(response => response.json())
+      .then(data => {
+        const weather = `
+          <p><strong>${data.name}</strong></p>
+          <p>${data.weather[0].description}</p>
+          <p>Temperature: ${data.main.temp}°C</p>
+          <p>Humidity: ${data.main.humidity}%</p>
+        `;
+        document.getElementById('weather-info').innerHTML = weather;
+      })
+      .catch(err => {
+        document.getElementById('weather-info').innerText = 'Failed to load weather data.';
+      });
+
+    // Region data
+    const regionMap = {
+      "Murchison Falls National Park": "north",
+      "Queen Elizabeth National Park": "west",
+      "Bwindi Impenetrable Forest": "west",
+      "Kampala City": "central",
+      "Jinja - Source of the Nile": "east",
+      "Lake Bunyonyi": "west",
+      "Sipi Falls": "east",
+      "Ziwa Rhino Sanctuary": "north"
+    };
+
+    // Filter and search functionality
+    document.getElementById('search').addEventListener('input', filterDestinations);
+    document.getElementById('region-filter').addEventListener('change', filterDestinations);
+
+    function filterDestinations() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const region = document.getElementById('region-filter').value;
+
+      document.querySelectorAll('.dest-item').forEach(item => {
+        const name = item.querySelector('h3').textContent;
+        const itemRegion = regionMap[name];
+        const matchesQuery = name.toLowerCase().includes(query);
+        const matchesRegion = region === 'all' || itemRegion === region;
+        item.style.display = matchesQuery && matchesRegion ? 'block' : 'none';
+      });
+    }
+
+    // Simple feedback form handler
+    document.getElementById('feedback-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Thank you for your feedback!');
+      this.reset();
+    });
+
+    const translations = {
+      en: {
+        heroTitle: "Discover the Pearl of Africa",
+        heroText: "Find beautiful landscapes, wildlife, culture, and more across Uganda.",
+        mapTitle: "Interactive Map of Uganda",
+        destTitle: "Top Destinations",
+        planTitle: "Plan Your Visit",
+        weatherTitle: "Current Weather in Kampala",
+        contactTitle: "Contact & Info",
+        email: "Email: info@exploreuganda.ug",
+        phone: "Phone: +256 700 000000",
+        feedbackTitle: "Feedback Form",
+        feedbackBtn: "Send Feedback"
+      },
+      lg: {
+        heroTitle: "Tunuulira Ensi Ennyonjo ya Africa",
+        heroText: "Weetegereze obulungi obulamu bw’ensiko, eby’obulamu n’ennono mu Uganda.",
+        mapTitle: "Kaadi y’Ensi eya Uganda",
+        destTitle: "Ebifo Ebirungi Okukyala",
+        planTitle: "Teekateeka Okukyala Kwo",
+        weatherTitle: "Obudde mu Kampala",
+        contactTitle: "Okutukwatako",
+        email: "Email: info@exploreuganda.ug",
+        phone: "Ssimu: +256 700 000000",
+        feedbackTitle: "Foomu ya Okuddamu",
+        feedbackBtn: "Tuma Ebbaluwa"
+      },
+      sw: {
+        heroTitle: "Gundua Lulu ya Afrika",
+        heroText: "Gundua mandhari nzuri, wanyama pori, tamaduni, na zaidi kote Uganda.",
+        mapTitle: "Ramani ya Uganda",
+        destTitle: "Maeneo Maarufu ya Kutembelea",
+        planTitle: "Panga Ziara Yako",
+        weatherTitle: "Hali ya Hewa ya Kampala",
+        contactTitle: "Mawasiliano",
+        email: "Barua pepe: info@exploreuganda.ug",
+        phone: "Simu: +256 700 000000",
+        feedbackTitle: "Fomu ya Maoni",
+        feedbackBtn: "Tuma Maoni"
+      }
+    };
+
+    function translatePage(lang) {
+      const t = translations[lang];
+      document.querySelector('#hero h2').textContent = t.heroTitle;
+      document.querySelector('#hero p').textContent = t.heroText;
+      document.querySelector('#map h2').textContent = t.mapTitle;
+      document.querySelector('#destinations h2').textContent = t.destTitle;
+      document.querySelector('#plan h2').textContent = t.planTitle;
+      document.querySelector('#weather h2').textContent = t.weatherTitle;
+      document.querySelector('#contact h2').textContent = t.contactTitle;
+      document.querySelector('#contact p:nth-of-type(1)').textContent = t.email;
+      document.querySelector('#contact p:nth-of-type(2)').textContent = t.phone;
+      document.querySelector('#contact h2 + form > button').textContent = t.feedbackBtn;
+      document.querySelector('#contact h2').textContent = t.feedbackTitle;
+    }
+
+    document.getElementById('language-select').addEventListener('change', (e) => {
+      translatePage(e.target.value);
+    });
+
+    // Initial translation
+    translatePage('en');
+  </script>
+</body>
+</html>
